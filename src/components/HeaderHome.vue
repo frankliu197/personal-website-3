@@ -1,13 +1,13 @@
 <template lang="pug">
-.header-home.header(ref='container' v-resize='onResize')
-  v-app-bar(:height='HEADER_HEIGHT' fixed='fixed' v-scroll='onScroll' :class='navBarClass()' :elevation='scrollTop == 0 ? 0 : 12')
+.header-home.header(ref='container' @resize='onResize')
+  v-app-bar(:height='HEADER_HEIGHT' fixed='fixed' @scroll='onScroll' :class='navBarClass' :elevation='scrollTop == 0 ? 0 : 12')
     v-btn(text='text' @click='scrollToTop')
       v-app-bar-title Frank Liu
     v-toolbar-items
-      template(v-if='!collapseNavBar')
-        template(v-for='item of menuItems')
-          v-btn(text='text' :href="'#' + item.title.toLowerCase()" :class='navBtnClass(item)') {{ $t(item.title) }}
-        v-btn(text='text' @click="emitter.emit('toggleContact')") {{ $t('contact') }}
+      //template(v-if='!collapseNavBar')
+      template(v-for='item in menuItems')
+        v-btn(text='text' :href="'#' + item.title.toLowerCase()" :class='navBtnClass(item)') {{ $t(item.title) }}
+      v-btn(text='text' @click="eventBus.emit('toggleContact')") {{ $t('contact') }}
     v-spacer
     v-toolbar-items
       DarkThemeToggler
@@ -15,95 +15,97 @@
       //template(v-if='collapseNavBar')
         v-divider(vertical='vertical')
         v-app-bar-nav-icon(@click='showNavDrawer = true')
-  //for laterv-navigation-drawer(app='app' temporary='temporary' right='right' v-model='showNavDrawer' v-bind='navDrawDimensions' v-resize='() => {showNavDrawer = collapseNavBar && showNavDrawer}')
-    v-list
-      v-list-item
-        v-list-item-title.text-h6 {{ $t('Menu') }}
-    v-divider
-    v-list
-      template(v-for='item of menuItems')
+  //for later
+    v-navigation-drawer(app='app' :temporary='true' :right='true' v-model='showNavDrawer' v-bind='navDrawDimensions' @resize='() => {showNavDrawer = collapseNavBar && showNavDrawer}')
+      v-list
         v-list-item
-          v-btn(text='text' :href="'#' + item.title.toLowerCase()" :class='navBtnClass(item)') {{ $t(item.title) }}
-      v-list-item
-        v-btn(text='text' @click="emitter.emit('toggleContact')") {{ $t('Contact') }}
-
+          v-list-item-title.text-h6 {{ $t('Menu') }}
+      v-divider
+      v-list
+        template(v-for='item in menuItems')
+          v-list-item
+            v-btn(text='text' :href="'#' + item.title.toLowerCase()" :class='navBtnClass(item)') {{ $t(item.title) }}
+        v-list-item
+          v-btn(text='text' @click="emitter.emit('toggleContact')") {{ $t('Contact') }}
 </template>
 
 
-<script lang="ts">
-import Vue from "vue";
-const MIN_NAVDRAW_WIDTH = 300;
-const COLLAPSE_NAV_BAR_WIDTH = 800;
-const HEADER_HEIGHT = 56;
-import DarkThemeToggler from "@/components/DarkThemeToggler.vue";
-import LocaleSelector from "@/components/LocaleSelector.vue";
-import emitter from "@/services/event-bus";
-export default Vue.extend({
-  name: "HeaderHome",
-  components: {
-    LocaleSelector,
-    DarkThemeToggler,
-  },
-  props: {
-    menuItems: Array as () => any[],
-  },
-  data: function () {
-    return {
-      width: 0,
-      showNavDrawer: false,
-      emitter,
-      scrollTop: 0,
-      HEADER_HEIGHT,
-    };
-  },
-  methods: {
-    scrollToTop() {
-      window.scrollTo(0, 0);
-    },
-    onScroll() {
-      this.scrollTop = document.documentElement.scrollTop;
-    },
-    onResize() {
-      this.width = (this.$refs.container as HTMLDivElement).clientWidth;
-    },
-    navBtnClass(item: any): string {
-      if (
-        this.scrollTop >= item.top - HEADER_HEIGHT &&
-        this.scrollTop < item.top + item.height - HEADER_HEIGHT
-      ) {
-        return "active";
-      }
-      return "";
-    },
-    navBarClass(): string {
-      if (this.scrollTop < this.menuItems[0].top - HEADER_HEIGHT) {
-        return "transparent";
-      } else {
-        return "";
-      }
-    },
-  },
-  computed: {
-    navDrawDimensions(): any {
-      return {
-        width:
-          this.width / 3 > MIN_NAVDRAW_WIDTH ? this.width : MIN_NAVDRAW_WIDTH,
-      };
-    },
-    collapseNavBar(): boolean {
-      return this.width < COLLAPSE_NAV_BAR_WIDTH;
-    },
-  },
-  watch: {
-    /*
-    $route(to, from) {
-      this.home = to.name === 'Home'
-    }*/
-  },
-  mounted() {
-    this.onScroll();
-  },
-});
+<script lang="ts" setup>
+const MIN_NAVDRAW_WIDTH = 300
+const COLLAPSE_NAV_BAR_WIDTH = 800
+const HEADER_HEIGHT = 56
+
+import { defineProps, onMounted, ref, type Ref } from 'vue'
+import type { PropType } from 'vue'
+import eventBus from '@/services/event-bus'
+import DarkThemeToggler from '@/components/DarkThemeToggler.vue'
+import LocaleSelector from "@/components/LocaleSelector.vue"
+
+export interface MenuItem {
+  title: string;
+  height: number;
+  top: number;
+}
+
+const props = defineProps({
+  menuItems: {
+    type: Array as PropType<MenuItem[]>,
+    required: true
+  }
+})
+
+const width = ref(0)
+const showNavDrawer = ref(false)
+const scrollTop = ref(0)
+const container: Ref<HTMLDivElement | null> = ref(null)
+
+function scrollToTop() {
+  debugger
+  window.scrollTo(0, 0);
+}
+
+function onScroll() {
+  scrollTop.value = document.documentElement.scrollTop;
+  debugger
+}
+
+function onResize() {
+  width.value = container.value!.clientWidth;
+  debugger
+}
+
+function navBtnClass(item: any): string {
+  if (
+    scrollTop.value >= item.top - HEADER_HEIGHT &&
+    scrollTop.value < item.top + item.height - HEADER_HEIGHT
+  ) {
+    return "active";
+  }
+  return "";
+}
+
+function navBarClass(): string {
+  if (scrollTop.value < props.menuItems[0].top - HEADER_HEIGHT) {
+    return "transparent";
+  } else {
+    return "";
+  }
+}
+
+const navDrawDimensions = () => {
+  return {
+    width: width.value / 3 > MIN_NAVDRAW_WIDTH ? width.value : MIN_NAVDRAW_WIDTH
+  }
+}
+
+const collapseNavBar = () => {
+  return width.value < COLLAPSE_NAV_BAR_WIDTH
+}
+
+onMounted(() => {
+  onScroll()
+})
+
 </script>
 
 <style lang="scss">

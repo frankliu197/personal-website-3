@@ -3,15 +3,12 @@
   v-footer(v-if="route.name === 'Home'" padless)
     v-container(fluid)
       .horizontal-aligner
-        v-btn(x-large @click="toggleContact") {{ t("contact-me") }}
+        v-btn(x-large @click="toggleContact") {{ $t("contact-me") }}
 </template>
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import eventBus from "@/services/event-bus"
-import { useI18n } from 'vue-i18n'
-
-const { t } = useI18n() 
 const route = useRoute()
 const toggleContact = () => {
   eventBus.emit('toggleContact');
