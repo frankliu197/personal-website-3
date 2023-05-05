@@ -40,6 +40,9 @@ import type { PropType } from 'vue'
 import eventBus from '@/services/event-bus'
 import DarkThemeToggler from '@/components/DarkThemeToggler.vue'
 import LocaleSelector from "@/components/LocaleSelector.vue"
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n() 
 
 export interface MenuItem {
   title: string;
@@ -130,12 +133,6 @@ onMounted(() => {
   .v-toolbar__items {
     align-items: center;
   }
-}
-
-.theme--light {
-  .header-home {
-    
-  }    
 }
 </style>
 
